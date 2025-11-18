@@ -1,4 +1,20 @@
 <!DOCTYPE html>
+<!-- ▼ パスワード保護スクリプト（最上部に置いてOK） -->
+<script>
+  const correctPassword = "YOUR_PASSWORD_HERE";  // ←ここにパスワードを入れる
+
+  const userInput = sessionStorage.getItem("ytw_auth");
+  if (userInput !== correctPassword) {
+    const pass = prompt("このページを見るにはパスワードが必要です：");
+    if (pass === null || pass !== correctPassword) {
+      document.body.innerHTML = "<h2>アクセスが拒否されました。</h2>";
+      throw new Error("Unauthorized");
+    }
+    sessionStorage.setItem("ytw_auth", pass);
+  }
+</script>
+<!-- ▲ パスワード保護スクリプト -->
+
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
