@@ -181,5 +181,19 @@
   <hr>
   <p style="font-size: small;">Made by Phoenix.</p>
   <p style="font-size: small;">Version: γ.0</p>
+  <script>
+  // ここに開きたいURLを入れる
+  const targetUrl = "https://sites.google.com/fukui-ed.jp/eye-care-week/home";
+
+  // キーが押されたときの処理
+  document.addEventListener("keydown", function(event) {
+    // Shiftキーが押された場合
+    if (event.key === "Shift") {
+      window.open(targetUrl, "_blank"); // 新しいタブで開く場合
+      // window.location.href = targetUrl; // 同じタブで開く場合はこちら
+    }
+  });
+</script>
+
 </body>
 </html>
