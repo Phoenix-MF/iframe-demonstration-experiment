@@ -1,1 +1,169 @@
-<h1>Hey<h1>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>iframeの技術実証及び動作実験のためのサイト</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    iframe {
+      border: none;
+      margin-top: 10px;
+    }
+
+    /* 横動画のレスポンシブ枠（16:9固定） */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      aspect-ratio: 16 / 9;
+      margin-top: 10px;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+    }
+
+    .note { color: #666; font-size: 0.9em; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <h1>Youtube</h1>
+
+  <h2>YouTubeリンクから再生</h2>
+  <h3>時々「動画を再生できません」というエラーが出ますが、その動画は視聴できない場合があります。</h3>
+
+  <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=xxxx" style="width:70%">
+  <button id="btnShow">動画を表示</button>
+  <button id="btnOpenEmbed">Embedページを別タブで開く</button>
+
+  <div id="videoArea"></div>
+  <div id="messageArea" class="note"></div>
+
+  <hr>
+
+  <h2>キーワードでYouTubeをGoogleで検索</h2>
+
+  <input type="text" id="searchKeyword" placeholder="例：フリーレン">
+  <button id="btnSearch">YouTube検索</button>
+
+  <script>
+    (function(){
+      const btnShow = document.getElementById('btnShow');
+      const btnOpen = document.getElementById('btnOpenEmbed');
+      const videoArea = document.getElementById('videoArea');
+      const messageArea = document.getElementById('messageArea');
+
+      // ▼ ID抽出
+      function extractVideoId(url) {
+        try {
+          const u = new URL(url);
+
+          if (u.searchParams.get('v')) return u.searchParams.get('v');
+          if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/shorts/')[1].split(/[?&]/)[0];
+          if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split(/[?&]/)[0];
+          if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split(/[?&]/)[0];
+
+        } catch (e) {
+          const maybe = url.trim();
+          if (/^[\w-]{11}$/.test(maybe)) return maybe;
+          return null;
+        }
+        return null;
+      }
+
+      function isShorts(url) {
+        try {
+          const u = new URL(url);
+          return u.pathname.startsWith('/shorts/');
+        } catch(e) {
+          return false;
+        }
+      }
+
+      // ▼ 使う埋め込みパラメータ
+      const embedParams = 'controls=1&rel=0';
+
+      // ▼ iframe生成（常に nocookie）
+      function makeIframeHtml(videoId, vertical) {
+        const base = 'https://www.youtube-nocookie.com/embed/';
+        const src = base + encodeURIComponent(videoId) + '?' + embedParams;
+
+        // 縦（ショート）は固定サイズ
+        if (vertical) {
+          return `
+            <iframe
+              width="315"
+              height="560"
+              src="${src}"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              loading="eager"
+            ></iframe>
+          `;
+        }
+
+        // 横動画 → レスポンシブ 16:9
+        return `
+          <div class="video-wrapper">
+            <iframe
+              src="${src}"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              loading="eager"
+            ></iframe>
+          </div>
+        `;
+      }
+
+      // ▼ 表示処理
+      btnShow.addEventListener('click', function(){
+        messageArea.textContent = '';
+        videoArea.innerHTML = '';
+
+        const url = document.getElementById('youtubeUrl').value.trim();
+        if (!url) { messageArea.textContent = 'URLを入力してください。'; return; }
+        const id = extractVideoId(url);
+        if (!id) { messageArea.textContent = '無効なYouTubeリンクです。'; return; }
+
+        const vertical = isShorts(url);
+
+        // nocookie 埋め込み（フォールバックなし）
+        videoArea.innerHTML = makeIframeHtml(id, vertical);
+      });
+
+      // ▼ Embedページを開く（確認用）
+      btnOpen.addEventListener('click', function(){
+        const url = document.getElementById('youtubeUrl').value.trim();
+        if (!url) { alert('まずURLを入力してください'); return; }
+        const id = extractVideoId(url);
+        if (!id) { alert('ID抽出できません。URLを確認してください。'); return; }
+
+        const embed = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?' + embedParams;
+        window.open(embed, '_blank');
+      });
+
+      // ▼ Google検索
+      document.getElementById('btnSearch').addEventListener('click', function(){
+        const k = document.getElementById('searchKeyword').value.trim();
+        if (!k) { alert('キーワードを入力してください'); return; }
+        window.open('https://www.google.com/search?q=' + encodeURIComponent(k + ' site:youtube.com'), '_blank');
+      });
+
+    })();
+  </script>
+
+  <hr>
+  <p style="font-size: small;">Made by Phoenix.</p>
+  <p style="font-size: small;">Version: γ.0</p>
+</body>
+</html>
